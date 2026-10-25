@@ -1,0 +1,106 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "cc-haha brand profile",
+  "description": "一个品牌一份 brand.json。构建时由 tools/brand/apply.mjs 读取,生成 TS 品牌模块、复制资源、改写 index.html 与 desktop/package.json。",
+  "type": "object",
+  "required": ["id", "productName", "appId"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "description": "品牌标识(小写字母/数字/连字符),用于目录名与构建参数"
+    },
+    "productName": {
+      "type": "string",
+      "minLength": 1,
+      "description": "产品名。进入 productName、app.name、窗口标题、侧边栏字标、安装包名"
+    },
+    "windowTitle": {
+      "type": "string",
+      "description": "窗口标题(<title>)。缺省用 productName"
+    },
+    "appId": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9.-]+$",
+      "description": "electron-builder appId,如 com.helix.desktop"
+    },
+    "tagline": {
+      "type": "string",
+      "description": "副标题/简介"
+    },
+    "logo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mark": { "type": "string", "description": "方形标记图(相对仓库根),用于侧边栏 BrandSeal" },
+        "wordmark": { "type": "string", "description": "横版字标(可选)" },
+        "appIcon": { "type": "string", "description": "应用图标源图(>=512px png),构建脚本据此生成各尺寸/ico/icns" }
+      }
+    },
+    "accent": {
+      "type": "string",
+      "pattern": "^#[0-9a-fA-F]{6}$",
+      "description": "品牌强调色(覆盖 --color-brand)"
+    },
+    "wordmarkSplit": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 2,
+      "maxItems": 2,
+      "description": "侧边栏字标的两段式写法(第二段着品牌色),如 [\"cc-\",\"haha\"];缺省则整名显示"
+    },
+    "author": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "github": { "type": "string" },
+        "avatar": { "type": "string" },
+        "social": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "url"],
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string", "description": "平台名,如 Bilibili" },
+              "url": { "type": "string" },
+              "label": { "type": "string", "description": "展示文本,缺省用 url" },
+              "icon": { "type": "string", "description": "图标路径(相对仓库根),支持 svg/png" }
+            }
+          }
+        }
+      }
+    },
+    "repo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "url": { "type": "string" },
+        "issues": { "type": "string" },
+        "releases": { "type": "string" },
+        "label": { "type": "string" }
+      }
+    },
+    "community": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "qr": { "type": "string", "description": "社群二维码图(可选)" }
+      }
+    },
+    "attribution": {
+      "type": "object",
+      "description": "上游署名。required 为 true 时构建脚本强制保留,不可删除。",
+      "additionalProperties": false,
+      "properties": {
+        "required": { "type": "boolean" },
+        "text": { "type": "string" },
+        "url": { "type": "string" },
+        "copyright": { "type": "string" }
+      }
+    }
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "$schema": "../../tools/brand/brand.schema.json",
+  "id": "helix",
+  "productName": "Helix",
+  "windowTitle": "Helix",
+  "appId": "com.helix.desktop",
+  "tagline": "Helix Desktop",
+
+  "logo": {
+    "mark": "brand/mark.svg",
+    "wordmark": "brand/wordmark.svg",
+    "appIcon": "brand/icon.png"
+  },
+
+  "author": {
+    "name": "iishows",
+    "github": "https://github.com/iishows",
+    "social": [
+      {
+        "name": "GitHub",
+        "url": "https://github.com/iishows",
+        "label": "iishows",
+        "icon": "icons/github.svg"
+      },
+      {
+        "name": "Bilibili",
+        "url": "https://space.bilibili.com/3461579641194985",
+        "label": "iishows",
+        "icon": "icons/bilibili.svg"
+      },
+      {
+        "name": "Douyin",
+        "url": "https://www.douyin.com/user/MS4wLjABAAAAg-ERYsj2ql8FRzp1YnpFM1oDKOVLI8CEFqKFC7jseIQ",
+        "label": "iishows",
+        "icon": "icons/douyin.svg"
+      },
+      {
+        "name": "Xiaohongshu",
+        "url": "https://www.xiaohongshu.com/user/profile/62da33260000000002002ff3",
+        "label": "iishows",
+        "icon": "icons/xiaohongshu.svg"
+      }
+    ]
+  },
+
+  "repo": {
+    "url": "https://github.com/iishows/helix",
+    "issues": "https://github.com/iishows/helix/issues",
+    "releases": "https://github.com/iishows/helix/releases",
+    "label": "iishows/helix"
+  },
+
+  "attribution": {
+    "required": true,
+    "text": "Based on cc-haha",
+    "url": "https://github.com/NanmiCoder/cc-haha",
+    "copyright": "Copyright (c) 2026 cc-haha"
+  }
+}

@@ -1,0 +1,29 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Helix">
+  <defs>
+    <linearGradient id="helix-a" x1="96" y1="48" x2="416" y2="464" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8B7BFF"/>
+      <stop offset="1" stop-color="#5B4BD6"/>
+    </linearGradient>
+    <linearGradient id="helix-b" x1="416" y1="48" x2="96" y2="464" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4FD1E0"/>
+      <stop offset="1" stop-color="#3AA6C9"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 背景圆角方块 -->
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="#141227"/>
+
+  <!-- 双螺旋: 两条互补正弦链 -->
+  <path d="M176 96 C 336 160, 336 352, 176 416"
+        stroke="url(#helix-a)" stroke-width="34" stroke-linecap="round" fill="none"/>
+  <path d="M336 96 C 176 160, 176 352, 336 416"
+        stroke="url(#helix-b)" stroke-width="34" stroke-linecap="round" fill="none"/>
+
+  <!-- 碱基对横档 -->
+  <g stroke="#FFFFFF" stroke-opacity="0.42" stroke-width="16" stroke-linecap="round">
+    <line x1="212" y1="152" x2="300" y2="152"/>
+    <line x1="196" y1="216" x2="316" y2="216"/>
+    <line x1="196" y1="296" x2="316" y2="296"/>
+    <line x1="212" y1="360" x2="300" y2="360"/>
+  </g>
+</svg>
