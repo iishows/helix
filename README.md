@@ -6,8 +6,7 @@
 
 <div align="center">
 
-[![GitHub Issues](https://img.shields.io/github/issues/iishows/helix)](https://github.com/iishows/helix/issues)
-[![License](https://img.shields.io/badge/License-Community_Source-orange)](https://github.com/iishows/helix/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/License-Community_Source-orange)](https://github.com/iishows/helix/blob/master/LICENSE)
 [![中文](https://img.shields.io/badge/🇨🇳_简体中文-当前-blue)](README.md)
 [![English](https://img.shields.io/badge/🇺🇸_English-Available-green)](README.en.md)
 
