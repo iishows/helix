@@ -78,7 +78,11 @@ export function resolveInstance(argv: readonly string[] = process.argv): Instanc
  *   (clearAppManagedPortableEnv 仅在 CC_HAHA_APP_PORTABLE_DIR=1 时才动手),
  *   因此后续 applyStartupPortableMode 会沿用该值。
  * - Electron 缓存:setPath('userData'),避免多个实例共用同一份存储。
- * - 单实例锁:置开关放行,让多个实例可以并存。
+ *
+ * 单实例锁不在本函数处理:Electron 的锁按 userData 目录归属,而上面已让每个实例
+ * 拥有独立 userData。因此不同实例互不干扰,同一实例重复启动会被锁挡下,并通过
+ * second-instance 唤起已有窗口。CC_HAHA_ELECTRON_DISABLE_SINGLE_INSTANCE_LOCK
+ * 保留为显式逃生开关(需在启动前由外部设置,见 singleInstance.ts)。
  */
 export function applyInstanceBootstrap(instance: InstanceConfig, env: NodeJS.ProcessEnv = process.env): void {
   app.setName(instance.name)
@@ -87,8 +91,6 @@ export function applyInstanceBootstrap(instance: InstanceConfig, env: NodeJS.Pro
     env.CLAUDE_CONFIG_DIR = path.join(instance.dir, 'data')
   }
   app.setPath('userData', path.join(instance.dir, 'electron'))
-  // 与既有环境变量开关等价,写进 process.env 以便子进程/后续代码读到一致状态
-  env.CC_HAHA_ELECTRON_DISABLE_SINGLE_INSTANCE_LOCK = '1'
 }
 
 /** 按实例目录派生稳定的 AppUserModelID,使任务栏/通知按实例分组。 */
