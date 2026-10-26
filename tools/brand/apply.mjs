@@ -262,6 +262,25 @@ if (!CHECK) {
   // 会把本品牌的更新指向 cc-haha,用户升级后会被替换成 cc-haha 本身。
   // 从 brand.json 的 repo.url(github.com/<owner>/<repo>)派生,避免依赖 schema 中不存在的 publish 字段;
   // repo 非必填,schema.required 只有 id/productName/appId,故缺失时仅告警。
+  // 许可文件必须随安装包分发 —— cc-haha 许可证第 4(a) 条要求把完整许可证与版权声明
+  // 一并交给接收方。与 author/version 同理:快照里没有这个字段,不在此显式写入的话,
+  // 每次 apply 都会把它从 package.json 里抹掉。
+  // 顶部 extraResources 与 win.extraResources 是叠加关系(electron-builder 的
+  // getFileMatchers 同时应用 config[name] 与平台级 customBuildOptions[name]),
+  // 因此这里不会覆盖 win 的 app-icon.ico。
+  pkg.build.extraResources = [
+    { from: '../LICENSE', to: 'LICENSE' },
+    { from: '../THIRD_PARTY_LICENSES.md', to: 'THIRD_PARTY_LICENSES.md' },
+  ]
+  // 上游身份残留的第二处:linux 包的 maintainer 写的是上游作者的个人邮箱,
+  // homepage 指向上游仓库,description 也仍带着上游产品名。三者都会出现在
+  // deb 元数据与安装器信息里,和 author 是同一类问题,一并按品牌配置改写。
+  pkg.homepage = cfg.repo?.url || pkg.homepage
+  pkg.description = cfg.description || `${cfg.productName} — ${cfg.tagline || 'desktop application'}`
+  pkg.build.linux = {
+    ...(pkg.build.linux || {}),
+    maintainer: cfg.author?.name || pkg.productName,
+  }
   const repoMatch = /github\.com\/([^/]+)\/([^/?#]+)/.exec(cfg.repo?.url || '')
   if (repoMatch) {
     const repoName = repoMatch[2].replace(/\.git$/, '')

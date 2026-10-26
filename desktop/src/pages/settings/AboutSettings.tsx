@@ -1,5 +1,5 @@
 import { useState, useEffect, type ReactNode } from 'react'
-import { ChevronDown, ChevronUp, ExternalLink, MessageSquareWarning, QrCode, UserRound } from 'lucide-react'
+import { ArrowLeft, ChevronDown, ChevronUp, ExternalLink, MessageSquareWarning, ScrollText, Star, UserRound } from 'lucide-react'
 import { useSettingsStore } from '../../stores/settingsStore'
 import { useTranslation } from '../../i18n'
 import { Input } from '@/components/ui/Input'
@@ -22,8 +22,10 @@ import { getDesktopHost } from '../../lib/desktopHost'
 import { publicAssetPath } from '../../lib/publicAsset'
 import { BrandSeal } from '../../components/composite/BrandSeal'
 import { BRAND } from '../../brand/runtime'
-import { Modal } from '@/components/ui/Modal'
 import { isValidHttpProxyUrl } from '../settings/shared'
+// 许可全文随仓库分发,构建期内联 —— 图形应用许可页展示完整许可证(许可证第 4(a) 条)。
+import BRAND_LICENSE_TEXT from '../../../../LICENSE?raw'
+import BRAND_LICENSE_DOCUMENT from '../../../../THIRD_PARTY_LICENSES.md?raw'
 
 /**
  * The About panel: version, update channel and the project's links.
@@ -42,6 +44,10 @@ const GITHUB_LABEL = BRAND.repo.label ?? GITHUB_REPO.replace(/^https?:\/\/(www\.
 const SOCIAL_LINKS = BRAND.author.social
 const AUTHOR_NAME = BRAND.author.name
 const ATTRIBUTION = BRAND.attribution
+
+function openUrl(url: string) {
+  void getDesktopHost().shell.open(url).catch(() => window.open(url, '_blank'))
+}
 
 export function AboutSettings() {
   const t = useTranslation()
@@ -67,7 +73,7 @@ export function AboutSettings() {
   const [isSavingUpdateProxy, setIsSavingUpdateProxy] = useState(false)
   const [isSavingAutoUpdate, setIsSavingAutoUpdate] = useState(false)
   const [autoUpdateSaveError, setAutoUpdateSaveError] = useState<string | null>(null)
-  const [communityOpen, setCommunityOpen] = useState(false)
+  const [licensesOpen, setLicensesOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -93,10 +99,6 @@ export function AboutSettings() {
     setUpdateProxyDraft(updateProxy)
     setUpdateProxySaveError(null)
   }, [updateProxy])
-
-  const openUrl = (url: string) => {
-    void getDesktopHost().shell.open(url).catch(() => window.open(url, '_blank'))
-  }
 
   const checkedAtText =
     checkedAt
@@ -182,6 +184,10 @@ export function AboutSettings() {
 
   const selectedUpdateProxyMode = updateProxyModes.find((mode) => mode.value === updateProxyDraft.mode)
 
+  if (licensesOpen) {
+    return <LicensesPanel onBack={() => setLicensesOpen(false)} />
+  }
+
   return (
     <div className="w-full min-w-0">
       <SettingsPageHeader title={t('settings.tab.about')} />
@@ -237,29 +243,22 @@ export function AboutSettings() {
             external
           />
         )}
-        {/* The QR is the same image README.md embeds under "User Group". A dialog
-            keeps it on screen; expanding inline pushed it below the fold. */}
         <LinkRow
-          icon={<QrCode size={16} strokeWidth={1.75} aria-hidden="true" />}
+          icon={<Star size={16} strokeWidth={1.75} aria-hidden="true" />}
           title={t('settings.about.community')}
           description={t('settings.about.communityDesc')}
-          onClick={() => setCommunityOpen(true)}
-          aria-haspopup="dialog"
+          onClick={() => openUrl(GITHUB_REPO)}
+          external
         />
-        {/* 上游署名 —— cc-haha 许可证(LICENSE 第 4 条)要求图形界面保留此声明。
-            这是强制项,品牌配置无法移除。 */}
-        <div className="px-1 pt-1 text-[12px] leading-5 text-[var(--color-text-secondary)] opacity-70">
-          <span>{ATTRIBUTION.text} </span>
-          <button
-            type="button"
-            className="cursor-pointer underline underline-offset-2 hover:opacity-100"
-            onClick={() => openUrl(ATTRIBUTION.url)}
-          >
-            {ATTRIBUTION.url}
-          </button>
-          <br />
-          <span>{ATTRIBUTION.copyright}</span>
-        </div>
+        {/* 许可与上游署名 —— cc-haha 许可证第 4 条要求图形应用在可正常访问的
+            About/法律页面展示来源署名;第 4(a) 条要求随分发提供完整许可证。
+            两者都在此入口后的许可页里,品牌配置无法移除。 */}
+        <LinkRow
+          icon={<ScrollText size={16} strokeWidth={1.75} aria-hidden="true" />}
+          title={t('settings.about.licenses')}
+          description={t('settings.about.licensesDesc')}
+          onClick={() => setLicensesOpen(true)}
+        />
       </SettingsGroup>
 
       <SettingsSection
@@ -463,24 +462,73 @@ export function AboutSettings() {
           ))}
         </SettingsGroup>
       </SettingsSection>
+    </div>
+  )
+}
 
-      <Modal
-        open={communityOpen}
-        onClose={() => setCommunityOpen(false)}
-        title={t('settings.about.community')}
-        width={360}
-      >
-        <div className="flex flex-col items-center gap-3 pb-2">
-          <img
-            src={publicAssetPath(BRAND.communityQr ?? 'icons/wechat-group-qr.png')}
-            alt={t('settings.about.communityQrAlt')}
-            width={240}
-            height={240}
-            className="rounded-[var(--radius-md)]"
-          />
-          <p className="text-center text-xs text-[var(--color-text-tertiary)]">{t('settings.about.communityHint')}</p>
-        </div>
-      </Modal>
+/**
+ * 许可与来源署名页。
+ *
+ * cc-haha Community Source License 1.0 第 4 条要求:图形应用须在「可正常访问的
+ * About 或法律页面」显著展示来源署名与链接(第 4(b) 条),须随分发材料提供完整
+ * 许可证文本(第 4(a) 条),并在修改发行版中显著标注非官方身份(第 4(c) 条)。
+ * 三者集中在此页,便于一处满足、一处审查。署名文本来自品牌配置,不可移除。
+ */
+function LicensesPanel({ onBack }: { onBack: () => void }) {
+  const t = useTranslation()
+
+  return (
+    <div className="w-full min-w-0">
+      <Button variant="ghost" size="base" className="-ml-3" icon={<ArrowLeft size={14} strokeWidth={1.75} />} onClick={onBack}>
+        {t('settings.licenses.back')}
+      </Button>
+
+      <SettingsPageHeader title={t('settings.licenses.title')} description={t('settings.licenses.description')} className="mt-4" />
+
+      <SettingsSection title={t('settings.licenses.attribution')}>
+        <SettingsBlock className="py-4 text-[13px] leading-6 text-[var(--color-text-secondary)]">
+          <p>
+            <span className="font-medium text-[var(--color-text-primary)]">{ATTRIBUTION.text}</span>
+            {': '}
+            <button
+              type="button"
+              className="cursor-pointer text-[var(--color-text-accent)] underline underline-offset-2"
+              onClick={() => openUrl(ATTRIBUTION.url)}
+            >
+              {ATTRIBUTION.url}
+            </button>
+          </p>
+          <p className="mt-1">{ATTRIBUTION.copyright}</p>
+        </SettingsBlock>
+      </SettingsSection>
+
+      <SettingsSection title={t('settings.licenses.unofficialTitle')}>
+        <SettingsBlock className="py-4 text-[13px] leading-6 text-[var(--color-text-secondary)]">
+          <p>{t('settings.licenses.unofficialBody', { brand: BRAND.productName })}</p>
+          <p className="mt-2 font-medium text-[var(--color-text-primary)]">{t('settings.licenses.changesTitle')}</p>
+          <ul className="mt-1 list-disc space-y-1 pl-5">
+            <li>{t('settings.licenses.changeBranding')}</li>
+            <li>{t('settings.licenses.changeIdentity')}</li>
+            <li>{t('settings.licenses.changeCommunity')}</li>
+          </ul>
+        </SettingsBlock>
+      </SettingsSection>
+
+      <SettingsSection title={t('settings.licenses.licenseTitle')}>
+        <SettingsBlock className="py-4">
+          <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap break-words rounded-[var(--radius-md)] bg-[var(--color-surface-container)] p-3 font-mono text-[11px] leading-5 text-[var(--color-text-secondary)]">
+            {BRAND_LICENSE_TEXT}
+          </pre>
+        </SettingsBlock>
+      </SettingsSection>
+
+      <SettingsSection title={t('settings.licenses.thirdPartyTitle')}>
+        <SettingsBlock className="py-4">
+          <pre className="max-h-[320px] overflow-auto whitespace-pre-wrap break-words rounded-[var(--radius-md)] bg-[var(--color-surface-container)] p-3 font-mono text-[11px] leading-5 text-[var(--color-text-secondary)]">
+            {BRAND_LICENSE_DOCUMENT}
+          </pre>
+        </SettingsBlock>
+      </SettingsSection>
     </div>
   )
 }

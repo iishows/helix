@@ -17,6 +17,11 @@
 > **Based on cc-haha** —— Helix 是 [cc-haha](https://github.com/NanmiCoder/cc-haha) 的二次分发版本（白标 fork）。
 > 本项目遵循 [cc-haha Community Source License 1.0](LICENSE)，完整保留上游署名与许可声明；
 > 上游代码版权归 cc-haha 所有（Copyright (c) 2026 cc-haha）。上游名称与图标的所有权利归其各自所有者。
+>
+> **本发行版是非官方的修改版。** Helix 未经 cc-haha 维护者发布、审核或背书，也不是 cc-haha 的官方发行版。
+> 相对于上游的实质改动：① 品牌改为 Helix（产品名、图标、主题与多语言文案）；② 应用内与安装包元数据中的
+> 作者、发布者身份由上游作者改为 `doitx.ai`；③ 移除「关于」页中的上游企业微信社群二维码，改为指向本仓库的链接。
+> 许可证页（应用内「设置 → 关于 → 许可与来源署名」）同样载明上述声明与许可证全文。
 
 Helix 是一个**桌面端 Claude Code 工作台**：多会话与全局搜索、分支 / Worktree 启动、Diff 审阅、内置浏览器预览、图形化权限审批、模型自选（Claude / ChatGPT / Grok / 预设 / 本地端点）、图片生成、MCP 与 SubAgent 可视化管理、Agent Teams 协作工作台、动态 Workflow 编排、模型请求追踪、Computer Use、技能市场、多主题、桌面宠物、H5 远程访问、IM 接入和定时任务，集中在一个 macOS / Windows / Linux APP 里。**在 macOS 上，Computer Use 能操作其他应用，同时不占用你的真实鼠标和键盘。**
 

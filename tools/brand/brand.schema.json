@@ -29,6 +29,10 @@
       "type": "string",
       "description": "副标题/简介"
     },
+    "description": {
+      "type": "string",
+      "description": "package.json 的 description(安装器与 deb 元数据展示)。缺省由 productName 与 tagline 拼出"
+    },
     "logo": {
       "type": "object",
       "additionalProperties": false,

@@ -18,6 +18,13 @@
 > It is distributed under the [cc-haha Community Source License 1.0](LICENSE), retaining the upstream
 > attribution and license notices in full. Upstream code is copyright (c) 2026 cc-haha.
 > All rights to the upstream name and logo remain with their respective owners.
+>
+> **This distribution is an unofficial, modified build.** Helix is not released, reviewed or endorsed by the
+> cc-haha maintainers, and is not an official cc-haha release. Material changes from upstream: (1) rebranded to
+> Helix (product name, icons, themes and localised copy); (2) the author and publisher identity shown in the app
+> and in the installer metadata is `doitx.ai` rather than the upstream author; (3) the upstream WeCom community QR
+> code was removed from the About page and replaced with a link to this repository. The same statements and the
+> full license texts are shown in-app under Settings → About → Licenses and attribution.
 
 Helix is a **desktop Claude Code workspace** for macOS, Windows, and Linux: multi-session workspaces, global search, branch / Worktree launch, diff review, built-in browser preview, GUI permission approval, any model — Claude, ChatGPT, Grok, presets, or local endpoints — image generation, visual MCP & SubAgent managers, an Agent Teams workbench, dynamic Workflow orchestration, model trace, Computer Use, skill marketplace, colour themes, desktop pets, H5 remote access, IM integration, and scheduled tasks, all in one app. **On macOS, Computer Use can operate other apps without taking over your physical mouse or keyboard.**
 

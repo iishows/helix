@@ -5,6 +5,7 @@
   "windowTitle": "Helix",
   "appId": "com.helix.desktop",
   "tagline": "Helix Desktop",
+  "description": "Helix —— 基于 cc-haha 的桌面端 Claude Code 工作台（非官方修改版）",
 
   "logo": {
     "mark": "brand/mark.svg",

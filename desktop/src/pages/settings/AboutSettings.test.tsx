@@ -101,7 +101,7 @@ it('keeps manual checking and installing available while automatic updates are o
   await screen.findByText((_, node) => node?.tagName === 'SPAN' && node.textContent === '版本 0.1.0')
 })
 
-it('opens the group QR in a dialog instead of pushing it below the fold', async () => {
+it('sends the group row to the repository instead of the upstream QR dialog', async () => {
   await renderAboutSettings()
   // The version arrives from an async host call; let it settle so the assertion
   // is not racing a state update.
@@ -109,16 +109,32 @@ it('opens the group QR in a dialog instead of pushing it below the fold', async 
 
   const entry = screen.getByRole('button', { name: new RegExp(`加入 ${BRAND.productName} 交流群`) })
   expect(entry.compareDocumentPosition(screen.getByRole('button', { name: /反馈问题/ })) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy()
-  expect(entry).toHaveAttribute('aria-haspopup', 'dialog')
+  // No QR dialog anywhere: the upstream community QR was removed from this build.
+  expect(entry).not.toHaveAttribute('aria-haspopup')
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  expect(screen.queryByRole('img', { name: /二维码/ })).not.toBeInTheDocument()
+})
 
-  fireEvent.click(entry)
+it('reaches the upstream attribution only through the licenses panel', async () => {
+  await renderAboutSettings()
+  // The attribution must not sit in the About list any more.
+  expect(screen.queryByText(BRAND.attribution.text)).not.toBeInTheDocument()
 
-  const dialog = screen.getByRole('dialog', { name: `加入 ${BRAND.productName} 交流群` })
-  const qr = screen.getByRole('img', { name: `${BRAND.productName} 企业微信用户群二维码` })
-  expect(dialog).toContainElement(qr)
-  expect(qr).toHaveAttribute('src', expect.stringContaining('icons/wechat-group-qr.png'))
+  fireEvent.click(screen.getByRole('button', { name: /许可与来源署名/ }))
 
-  fireEvent.click(screen.getByRole('button', { name: 'Close dialog' }))
-  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  expect(screen.getByText(BRAND.attribution.text)).toBeInTheDocument()
+  expect(screen.getByText(BRAND.attribution.copyright)).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: BRAND.attribution.url })).toBeInTheDocument()
+  // License §4(c): the modified distribution must be marked unofficial.
+  expect(screen.getByText(/非官方修改版再分发/)).toBeInTheDocument()
+  // License §4(a): the full license texts must travel with the distribution. The
+  // panel inlines them at build time, so a regression in the `?raw` wiring or in
+  // the `extraResources` copy is caught here. The license names itself more than
+  // once, hence getAllByText.
+  expect(screen.getAllByText(/cc-haha Community Source License 1\.0/).length).toBeGreaterThan(0)
+  expect(screen.getByText(/# Third-Party Licenses/)).toBeInTheDocument()
+
+  fireEvent.click(screen.getByRole('button', { name: '返回「关于」' }))
+  expect(screen.queryByText(BRAND.attribution.text)).not.toBeInTheDocument()
+  expect(screen.getByRole('switch', { name: '自动更新' })).toBeInTheDocument()
 })

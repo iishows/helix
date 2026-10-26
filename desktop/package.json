@@ -1,9 +1,9 @@
 {
   "name": "claude-code-desktop",
   "private": true,
-  "version": "0.7.8",
-  "description": "Desktop coding agent workbench for Claude Code Haha.",
-  "homepage": "https://github.com/NanmiCoder/cc-haha",
+  "version": "0.7.9",
+  "description": "Helix —— 基于 cc-haha 的桌面端 Claude Code 工作台（非官方修改版）",
+  "homepage": "https://github.com/iishows/helix",
   "author": {
     "name": "doitx.ai"
   },
@@ -83,13 +83,23 @@
       ],
       "icon": "src-tauri/icons",
       "category": "Development",
-      "maintainer": "NanmiCoder <relakkes@gmail.com>"
+      "maintainer": "doitx.ai"
     },
     "publish": [
       {
         "provider": "github",
         "owner": "iishows",
         "repo": "helix"
+      }
+    ],
+    "extraResources": [
+      {
+        "from": "../LICENSE",
+        "to": "LICENSE"
+      },
+      {
+        "from": "../THIRD_PARTY_LICENSES.md",
+        "to": "THIRD_PARTY_LICENSES.md"
       }
     ]
   },
