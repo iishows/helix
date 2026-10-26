@@ -1,5 +1,5 @@
 import { forwardRef, useState, useEffect, useMemo, useRef, type CSSProperties, type ReactNode } from 'react'
-import { AppWindow, Brain, ChevronDown, FolderInput, RotateCw } from 'lucide-react'
+import { AppWindow, Brain, ChevronDown, FolderInput, HardDrive, RotateCw } from 'lucide-react'
 import {
   useSettingsStore,
   UI_ZOOM_DEFAULT,
@@ -199,8 +199,13 @@ export function GeneralSettings() {
   const uiZoomPercent = Math.round(uiZoomDraft * 100)
   const uiZoomRangeProgress = `${Math.round(((uiZoomDraft - UI_ZOOM_MIN) / (UI_ZOOM_MAX - UI_ZOOM_MIN)) * 1000) / 10}%`
   const activeConfigDir = appMode.activeConfigDir ?? (appMode.mode === 'portable' ? appMode.portableDir : null)
-  const configDirSource = appMode.configDirSource ?? (appMode.mode === 'portable' ? 'portable' : 'system')
+  const configDirSource = appMode.configDirSource ?? (appMode.mode === 'portable' ? 'portable' : 'brand')
   const isEnvironmentConfigDir = configDirSource === 'environment'
+  const brandConfigDir = appMode.brandConfigDir ?? null
+  const systemConfigDir = appMode.systemConfigDir ?? null
+  // 「默认」= 品牌目录。「共用 Claude Code 目录」是显式选了 ~/.claude 的便携模式。
+  const isSharingSystemDir = configDirSource === 'portable' && systemConfigDir !== null
+    && portableDirDraft.trim() === systemConfigDir
   const activeSession = useMemo(
     () => sessions.find((session) => session.id === activeSessionId),
     [activeSessionId, sessions],
@@ -687,13 +692,13 @@ export function GeneralSettings() {
     }
   }
 
-  const openModeSwitchConfirm = (mode: AppMode) => {
+  const openModeSwitchConfirm = (mode: AppMode, explicitDir?: string) => {
     if (isEnvironmentConfigDir) {
       setModeError(t('settings.general.storageEnvironmentSwitchBlocked'))
       return
     }
 
-    const portableDir = portableDirDraft.trim()
+    const portableDir = (explicitDir ?? portableDirDraft).trim()
     if (mode === 'portable' && !portableDir) {
       setModeError(t('settings.general.storageNoDirError'))
       return
@@ -1592,15 +1597,39 @@ export function GeneralSettings() {
               <StorageOptionText
                 selected={appMode.mode === 'default' && !isEnvironmentConfigDir}
                 icon={<AppWindow size={16} strokeWidth={1.75} aria-hidden="true" />}
-                title={t('settings.general.storageSystemTitle')}
-                description={t('settings.general.storageSystemDescription')}
+                title={t('settings.general.storageBrandTitle')}
+                description={t('settings.general.storageBrandDescription', { dir: brandConfigDir ?? '' })}
               />
             </button>
 
-            <div className="px-4 py-3">
+            <button
+              type="button"
+              disabled={migrationRunning}
+              onClick={() => {
+                if (isEnvironmentConfigDir) {
+                  setModeError(t('settings.general.storageEnvironmentSwitchBlocked'))
+                  return
+                }
+                if (!isSharingSystemDir && systemConfigDir) {
+                  setPortableDirDraft(systemConfigDir)
+                  openModeSwitchConfirm('portable', systemConfigDir)
+                }
+              }}
+              aria-pressed={isSharingSystemDir && !isEnvironmentConfigDir}
+              className="group flex w-full items-start gap-3 border-t border-[var(--color-border)] px-4 py-3 text-left disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--color-border-focus)]"
+            >
+              <StorageOptionText
+                selected={isSharingSystemDir && !isEnvironmentConfigDir}
+                icon={<HardDrive size={16} strokeWidth={1.75} aria-hidden="true" />}
+                title={t('settings.general.storageSystemTitle')}
+                description={t('settings.general.storageSystemDescription', { dir: systemConfigDir ?? '' })}
+              />
+            </button>
+
+            <div className="border-t border-[var(--color-border)] px-4 py-3">
               <div className="flex items-start gap-3">
                 <StorageOptionText
-                  selected={appMode.mode === 'portable' && !isEnvironmentConfigDir}
+                  selected={appMode.mode === 'portable' && !isEnvironmentConfigDir && !isSharingSystemDir}
                   icon={<FolderInput size={16} strokeWidth={1.75} aria-hidden="true" />}
                   title={t('settings.general.storagePortableTitle')}
                   description={t('settings.general.storagePortableDescription')}

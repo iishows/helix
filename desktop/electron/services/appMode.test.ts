@@ -2,11 +2,14 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { BRAND } from '../../src/brand/generated'
 import {
   applyStartupPortableMode,
+  brandDataDir,
   clearAppManagedPortableEnv,
   determineStartupPortableDir,
   getAppMode,
+  seedBrandDataDir,
   setAppMode,
   systemClaudeConfigDir,
   type AppModeAppLike,
@@ -24,6 +27,7 @@ function app(root = tempDir()): AppModeAppLike & { root: string } {
   const exe = path.join(root, 'install', 'Claude Code Haha')
   const home = path.join(root, 'home')
   const userData = path.join(root, 'user-data')
+  const appData = path.join(root, 'app-data')
   fs.mkdirSync(path.dirname(exe), { recursive: true })
   fs.writeFileSync(exe, '')
   return {
@@ -31,6 +35,7 @@ function app(root = tempDir()): AppModeAppLike & { root: string } {
     getPath(name) {
       if (name === 'exe') return exe
       if (name === 'home') return home
+      if (name === 'appData') return appData
       return userData
     },
   }
@@ -58,21 +63,98 @@ describe('Electron app mode service', () => {
     expect(JSON.parse(fs.readFileSync(path.join(fakeApp.getPath('userData'), 'app-mode.json'), 'utf8')))
       .toMatchObject({ mode: 'portable', portable_dir: selected, future: { preserve: true } })
   })
-  it('always uses ~/.claude in system mode and ignores app-adjacent legacy data at runtime', () => {
+  it('defaults to the brand data directory and ignores app-adjacent legacy data at runtime', () => {
     const fakeApp = app()
     const legacyDir = path.join(path.dirname(fakeApp.getPath('exe')), 'CLAUDE_CONFIG_DIR')
     fs.mkdirSync(legacyDir, { recursive: true })
     fs.writeFileSync(path.join(legacyDir, 'settings.json'), '{"legacy":true}')
 
     expect(systemClaudeConfigDir(fakeApp)).toBe(path.join(fakeApp.root, 'home', '.claude'))
+    expect(brandDataDir(fakeApp)).toBe(path.join(fakeApp.root, 'app-data', BRAND.productName, 'data'))
     expect(determineStartupPortableDir(fakeApp, {})).toBeNull()
-    expect(applyStartupPortableMode(fakeApp, {})).toBeNull()
-    expect(getAppMode(fakeApp, {})).toEqual({
+
+    // 默认模式也必须设 CLAUDE_CONFIG_DIR:否则 sidecar 会按 `?? ~/.claude` 回落到共享目录。
+    const env: NodeJS.ProcessEnv = {}
+    expect(applyStartupPortableMode(fakeApp, env)).toBe(brandDataDir(fakeApp))
+    expect(env).toMatchObject({
+      CLAUDE_CONFIG_DIR: brandDataDir(fakeApp),
+      CC_HAHA_APP_PORTABLE_DIR: '1',
+      WEBVIEW2_USER_DATA_FOLDER: path.join(brandDataDir(fakeApp), 'EBWebView'),
+    })
+    expect(getAppMode(fakeApp, env)).toEqual({
       mode: 'default',
       portableDir: null,
-      activeConfigDir: path.join(fakeApp.root, 'home', '.claude'),
-      configDirSource: 'system',
+      activeConfigDir: brandDataDir(fakeApp),
+      configDirSource: 'brand',
+      brandConfigDir: brandDataDir(fakeApp),
+      systemConfigDir: path.join(fakeApp.root, 'home', '.claude'),
     })
+  })
+
+  it('never reads ~/.claude unless the user explicitly picks it', () => {
+    const fakeApp = app()
+    const homeClaude = path.join(fakeApp.root, 'home', '.claude')
+    fs.mkdirSync(homeClaude, { recursive: true })
+    fs.writeFileSync(path.join(homeClaude, 'settings.json'), '{"shared":true}')
+
+    const env: NodeJS.ProcessEnv = {}
+    expect(applyStartupPortableMode(fakeApp, env)).toBe(brandDataDir(fakeApp))
+    expect(env.CLAUDE_CONFIG_DIR).not.toBe(homeClaude)
+    expect(getAppMode(fakeApp, env).configDirSource).toBe('brand')
+
+    // 显式选择「共用 Claude Code 目录」后才落到 ~/.claude,并标成 portable。
+    setAppMode(fakeApp, { mode: 'portable', portableDir: homeClaude }, env)
+    const sharingEnv: NodeJS.ProcessEnv = {}
+    expect(applyStartupPortableMode(fakeApp, sharingEnv)).toBe(homeClaude)
+    expect(getAppMode(fakeApp, sharingEnv)).toMatchObject({
+      mode: 'portable',
+      activeConfigDir: homeClaude,
+      configDirSource: 'portable',
+    })
+  })
+
+  it('normalizes a legacy record that pointed the default mode at ~/.claude', () => {
+    const fakeApp = app()
+    const homeClaude = systemClaudeConfigDir(fakeApp)
+    writeMode(fakeApp, { mode: 'portable', portable_dir: homeClaude })
+
+    const env: NodeJS.ProcessEnv = {}
+    // 旧记录无法与「用户主动选 ~/.claude」区分,按历史默认处理:改回品牌目录。
+    expect(applyStartupPortableMode(fakeApp, env)).toBe(brandDataDir(fakeApp))
+    expect(JSON.parse(fs.readFileSync(path.join(fakeApp.getPath('userData'), 'app-mode.json'), 'utf8')))
+      .toMatchObject({ mode: 'default', portable_dir: null, brand_data_version: 1 })
+  })
+
+  it('keeps a genuinely custom legacy directory and only stamps the version marker', () => {
+    const fakeApp = app()
+    const customDir = path.join(fakeApp.root, 'my-own-data')
+    writeMode(fakeApp, { mode: 'portable', portable_dir: customDir })
+
+    const env: NodeJS.ProcessEnv = {}
+    expect(applyStartupPortableMode(fakeApp, env)).toBe(customDir)
+    expect(env.CLAUDE_CONFIG_DIR).toBe(customDir)
+    expect(JSON.parse(fs.readFileSync(path.join(fakeApp.getPath('userData'), 'app-mode.json'), 'utf8')))
+      .toMatchObject({ mode: 'portable', portable_dir: customDir, brand_data_version: 1 })
+  })
+
+  it('seeds credentials from the system directory once, without overwriting later edits', () => {
+    const fakeApp = app()
+    const target = brandDataDir(fakeApp)
+    const source = systemClaudeConfigDir(fakeApp)
+    fs.mkdirSync(source, { recursive: true })
+    for (const file of ['.credentials.json', 'settings.json', 'config.json']) {
+      fs.writeFileSync(path.join(source, file), `{"from":"system","file":"${file}"}`)
+    }
+    fs.writeFileSync(path.join(source, 'projects'), 'not-a-file')
+
+    expect(seedBrandDataDir(target, source).sort()).toEqual(['.credentials.json', 'config.json', 'settings.json'])
+    expect(fs.readFileSync(path.join(target, 'settings.json'), 'utf8')).toContain('system')
+
+    // 第二次调用不覆盖用户在新目录里的改动,也不再报告复制(重启安全)。
+    const edited = '{"from":"user"}'
+    fs.writeFileSync(path.join(target, 'settings.json'), edited)
+    expect(seedBrandDataDir(target, source)).toEqual([])
+    expect(fs.readFileSync(path.join(target, 'settings.json'), 'utf8')).toBe(edited)
   })
 
   it('activates only an explicit absolute custom directory persisted in userData', () => {
@@ -93,6 +175,8 @@ describe('Electron app mode service', () => {
       portableDir: customDir,
       activeConfigDir: customDir,
       configDirSource: 'portable',
+      brandConfigDir: brandDataDir(fakeApp),
+      systemConfigDir: systemClaudeConfigDir(fakeApp),
     })
   })
 
@@ -109,6 +193,8 @@ describe('Electron app mode service', () => {
       portableDir: externalDir,
       activeConfigDir: externalDir,
       configDirSource: 'environment',
+      brandConfigDir: brandDataDir(fakeApp),
+      systemConfigDir: systemClaudeConfigDir(fakeApp),
     })
     expect(() => setAppMode(fakeApp, { mode: 'default', portableDir: null }, env))
       .toThrow('CLAUDE_CONFIG_DIR is controlled by the launch environment')
@@ -155,13 +241,13 @@ describe('Electron app mode service', () => {
       WEBVIEW2_USER_DATA_FOLDER: path.join(oldCustomDir, 'EBWebView'),
     }
 
-    expect(applyStartupPortableMode(fakeApp, env)).toBeNull()
-    expect(env.CLAUDE_CONFIG_DIR).toBeUndefined()
-    expect(env.CC_HAHA_APP_PORTABLE_DIR).toBeUndefined()
-    expect(env.WEBVIEW2_USER_DATA_FOLDER).toBeUndefined()
+    // 旧的 app-managed 选择被丢弃后,重新解析为品牌默认目录(而不是残留的 old-custom)。
+    expect(applyStartupPortableMode(fakeApp, env)).toBe(brandDataDir(fakeApp))
+    expect(env.CLAUDE_CONFIG_DIR).toBe(brandDataDir(fakeApp))
+    expect(env.CC_HAHA_APP_PORTABLE_DIR).toBe('1')
     expect(getAppMode(fakeApp, env)).toMatchObject({
       mode: 'default',
-      activeConfigDir: systemClaudeConfigDir(fakeApp),
+      activeConfigDir: brandDataDir(fakeApp),
     })
   })
 
@@ -185,7 +271,7 @@ describe('Electron app mode service', () => {
     { mode: 'portable', portable_dir: '' },
     { mode: 'portable', portable_dir: 'relative-data' },
     { mode: 'unknown', portable_dir: '/tmp/custom' },
-  ])('falls back to system mode for invalid custom metadata: %o', value => {
+  ])('falls back to the brand default for invalid custom metadata: %o', value => {
     const fakeApp = app()
     writeMode(fakeApp, value)
 
@@ -193,8 +279,8 @@ describe('Electron app mode service', () => {
     expect(getAppMode(fakeApp, {})).toMatchObject({
       mode: 'default',
       portableDir: null,
-      activeConfigDir: systemClaudeConfigDir(fakeApp),
-      configDirSource: 'system',
+      activeConfigDir: brandDataDir(fakeApp),
+      configDirSource: 'brand',
     })
   })
 
@@ -211,13 +297,14 @@ describe('Electron app mode service', () => {
     expect(JSON.parse(fs.readFileSync(path.join(fakeApp.getPath('userData'), 'app-mode.json'), 'utf8'))).toEqual({
       mode: 'portable',
       portable_dir: customDir,
+      brand_data_version: 1,
     })
     expect(fs.existsSync(path.join(customDir, 'app-mode.json'))).toBe(false)
     expect(fs.existsSync(path.join(previousActive, 'app-mode.json'))).toBe(false)
     expect(fs.readdirSync(fakeApp.getPath('userData'))).toEqual(['app-mode.json'])
   })
 
-  it('switches back to system mode without touching the custom directory', () => {
+  it('switches back to the brand default without touching the custom directory', () => {
     const fakeApp = app()
     const customDir = path.join(fakeApp.root, 'custom-data')
     fs.mkdirSync(customDir, { recursive: true })
@@ -232,6 +319,7 @@ describe('Electron app mode service', () => {
     expect(JSON.parse(fs.readFileSync(path.join(fakeApp.getPath('userData'), 'app-mode.json'), 'utf8'))).toEqual({
       mode: 'default',
       portable_dir: null,
+      brand_data_version: 1,
     })
     expect(fs.readFileSync(path.join(customDir, 'settings.json'), 'utf8')).toBe('{"keep":true}')
   })

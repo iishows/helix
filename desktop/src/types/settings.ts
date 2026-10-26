@@ -201,5 +201,10 @@ export type AppModeConfig = {
   mode: AppMode
   portableDir: string | null
   activeConfigDir?: string | null
-  configDirSource?: 'system' | 'environment' | 'portable'
+  /** brand = 品牌默认目录;portable = 用户自选目录;environment = 启动环境变量接管 */
+  configDirSource?: 'brand' | 'system' | 'environment' | 'portable'
+  /** 品牌默认数据目录(设置界面用于展示默认落点) */
+  brandConfigDir?: string | null
+  /** Claude Code 标准目录 ~/.claude(设置界面用于展示「共用」选项的目标) */
+  systemConfigDir?: string | null
 }

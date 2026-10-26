@@ -259,7 +259,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     mode: 'default',
     portableDir: null,
     activeConfigDir: null,
-    configDirSource: 'system',
+    configDirSource: 'brand',
   },
   appModeRequiresRestart: false,
   setUiZoom: (zoom: number) => {

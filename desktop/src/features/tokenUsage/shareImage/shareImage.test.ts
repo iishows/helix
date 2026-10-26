@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import type { ActivityStatsResponse } from '../../../api/activityStats'
+import { BRAND } from '../../../brand/runtime'
 import { translate } from '../../../i18n'
 import type { RankedModel } from '../usageModel'
 import { buildShareImageData, niceStep } from './data'
@@ -109,7 +110,7 @@ describe('buildShareLayout', () => {
   it('leaves out what the user turned off', () => {
     const bare = buildShareLayout(DATA, THEME, { ...OPTIONS, showIdentity: false, showModels: false, showLink: false }, measure)
     const out = texts(bare.ops)
-    expect(out).toContain('cc-haha') // the brand mark stays; the name line goes
+    expect(out).toContain(BRAND.productName) // the brand mark stays; the name line goes
     expect(out).not.toContain(DATA.displayName)
     expect(out).not.toContain(DATA.summaryLine)
     expect(out).not.toContain('DeepSeek V4 Flash')

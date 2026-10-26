@@ -1,5 +1,6 @@
 import { act, renderHook } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
+import { BRAND } from '../brand/runtime'
 import { useSettingsStore } from '../stores/settingsStore'
 import { translate, useTranslation } from '.'
 import { en } from './locales/en'
@@ -102,6 +103,17 @@ describe('useTranslation', () => {
     expect(translate('kr', 'settings.general.storageSystemDescription')).toContain('~/.claude')
     expect(translate('en', 'settings.general.storagePortableTitle')).toContain('custom')
     expect(translate('zh', 'settings.general.storagePortableTitle')).toContain('自定义')
+  })
+
+  // 「默认」现在是品牌目录,不再是 ~/.claude。每个语种都必须点出品牌名与实际落点,
+  // 否则用户无法判断默认数据会写到哪里。
+  it('labels the brand default directory with the brand name and its location', () => {
+    for (const locale of ['en', 'zh', 'zh-TW', 'jp', 'kr'] as const) {
+      expect(translate(locale, 'settings.general.storageBrandTitle'), `${locale} brand title`)
+        .toContain(BRAND.productName)
+      expect(translate(locale, 'settings.general.storageBrandDescription', { dir: '/x/data' }), `${locale} brand dir`)
+        .toContain('/x/data')
+    }
   })
 
   // The installed-skills overview was dropped in b64069a3, but the UI rollback

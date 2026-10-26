@@ -343,8 +343,10 @@ describe('Settings > General tab', () => {
       appMode: {
         mode: 'default',
         portableDir: null,
-        activeConfigDir: '/Users/test/.claude',
-        configDirSource: 'system',
+        activeConfigDir: '/Users/test/Helix/data',
+        configDirSource: 'brand',
+        brandConfigDir: '/Users/test/Helix/data',
+        systemConfigDir: '/Users/test/.claude',
       },
       appModeRequiresRestart: false,
       fetchAppMode: vi.fn().mockResolvedValue(undefined),
@@ -353,8 +355,10 @@ describe('Settings > General tab', () => {
           appMode: {
             mode,
             portableDir: mode === 'portable' ? portableDir ?? null : null,
-            activeConfigDir: mode === 'portable' ? portableDir ?? null : '/Users/test/.claude',
-            configDirSource: mode === 'portable' ? 'portable' : 'system',
+            activeConfigDir: mode === 'portable' ? portableDir ?? null : '/Users/test/Helix/data',
+            configDirSource: mode === 'portable' ? 'portable' : 'brand',
+            brandConfigDir: '/Users/test/Helix/data',
+            systemConfigDir: '/Users/test/.claude',
           },
           appModeRequiresRestart: true,
         })
@@ -1045,7 +1049,7 @@ describe('Settings > General tab', () => {
     // The child's status render precedes its effect that reports the busy state
     // to General settings; observe the completed parent update as well.
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Use system directory/ })).toBeDisabled()
+      expect(screen.getByRole('button', { name: /Use Helix data directory/ })).toBeDisabled()
       expect(screen.getByLabelText('Custom data directory')).toBeDisabled()
       expect(screen.getByRole('button', { name: 'Choose Folder' })).toBeDisabled()
       expect(screen.getByRole('button', { name: 'Use This Folder and Restart' })).toBeDisabled()
@@ -1074,7 +1078,7 @@ describe('Settings > General tab', () => {
     })
   })
 
-  it('switches back to ~/.claude without deleting custom data', async () => {
+  it('switches back to the brand default without deleting custom data', async () => {
     useSettingsStore.setState({
       appMode: {
         mode: 'portable',
@@ -1087,7 +1091,7 @@ describe('Settings > General tab', () => {
     render(<Settings />)
 
     fireEvent.click(screen.getByText('General'))
-    fireEvent.click(screen.getByRole('button', { name: /Use system directory/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Use Helix data directory/ }))
 
     expect(screen.getByText(/Data in the custom directory is not deleted/)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Save and Restart' }))
@@ -1141,13 +1145,13 @@ describe('Settings > General tab', () => {
     fireEvent.click(screen.getByText('General'))
     expect(screen.getByText(/The current directory is controlled by the CLAUDE_CONFIG_DIR environment variable/)).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: /Use system directory/ }))
-    expect(screen.getByText(/Remove it from the launch environment before switching back/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Share with Claude Code/ }))
+    expect(screen.getByText(/Remove it from the launch environment before switching/)).toBeInTheDocument()
 
     fireEvent.change(screen.getByLabelText('Custom data directory'), { target: { value: '/other/data' } })
     fireEvent.click(screen.getByRole('button', { name: 'Use This Folder and Restart' }))
     expect(screen.queryByText('Switch data storage location?')).not.toBeInTheDocument()
-    expect(screen.getByText(/Remove it from the launch environment before switching back/)).toBeInTheDocument()
+    expect(screen.getByText(/Remove it from the launch environment before switching/)).toBeInTheDocument()
   })
 
   it('keeps mode switch confirmation cancelable before restart starts', async () => {
