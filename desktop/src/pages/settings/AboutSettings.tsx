@@ -444,17 +444,6 @@ export function AboutSettings() {
         </SettingsGroup>
       </SettingsSection>
 
-      <SettingsSection title={t('settings.about.author')}>
-        <SettingsGroup>
-          <LinkRow
-            icon={<img src={publicAssetPath('icons/github.svg')} alt="GitHub" className="h-4 w-4 opacity-60" />}
-            title="程序员阿江-Relakkes"
-            meta="GitHub"
-            onClick={() => openUrl(AUTHOR_GITHUB)}
-          />
-        </SettingsGroup>
-      </SettingsSection>
-
       <SettingsSection title={t('settings.about.socialMedia')}>
         <SettingsGroup>
           {SOCIAL_LINKS.map((link) => (

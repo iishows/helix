@@ -243,6 +243,18 @@ if (!CHECK) {
   pkg.build.productName = cfg.productName
   pkg.build.win = { ...(pkg.build.win || {}), icon: 'src-tauri/icons/icon.ico' }
   pkg.build.nsis = { ...(pkg.build.nsis || {}), shortcutName: cfg.productName }
+  // 上游的 author(NanmiCoder/relakkes@gmail.com)会写进 exe 的版本资源,必须一并品牌化,
+  // 否则每次 apply 都从 .brandorig 把上游身份带回来。邮箱不继承 —— 它是上游的个人邮箱。
+  if (cfg.author?.name) {
+    pkg.author = { name: cfg.author.name }
+    ok(`author → ${cfg.author.name}`)
+  }
+  // 版本以现网 package.json 为准 —— 它由发布流程维护,不属于品牌配置。
+  // 若从 .brandorig(上游快照)取,每次 apply 都会把已发布的版本号打回去。
+  try {
+    const live = JSON.parse(readFileSync(pkgPath, 'utf8'))
+    if (live.version) pkg.version = live.version
+  } catch { /* 首次 apply 时 package.json 尚未存在,用快照版本即可 */ }
   // 产物名原本硬编码为 Claude-Code-Haha-*,改为按品牌命名
   const safeName = cfg.productName.replace(/[^A-Za-z0-9._-]+/g, '-')
   pkg.build.artifactName = `${safeName}-\${version}-\${os}-\${arch}.\${ext}`

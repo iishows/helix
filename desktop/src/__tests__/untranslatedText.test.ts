@@ -55,8 +55,8 @@ const LANGUAGE_NEUTRAL: Record<string, string[]> = {
   'pages/Connectors.tsx': ['MCP', 'CLI'], // transport names
   'components/search/GlobalSearchModal.tsx': ['esc'], // the key, as printed on its keycap
   'pages/MemorySettings.tsx': ['Markdown'], // file format
-  'pages/settings/AboutSettings.tsx': [ // author and example proxy
-    'GitHub', '程序员阿江-Relakkes', 'http://127.0.0.1:7890',
+  'pages/settings/AboutSettings.tsx': [ // GitHub link icon, example proxy
+    'GitHub', 'http://127.0.0.1:7890',
   ],
   'pages/settings/ChatAppearanceSettings.tsx': ['px', '${}px'], // unit
   'pages/settings/GeneralSettings.tsx': ['http://127.0.0.1:7890', 'tvly-...'], // example proxy, key format

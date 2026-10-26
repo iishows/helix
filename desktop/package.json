@@ -1,12 +1,11 @@
 {
   "name": "claude-code-desktop",
   "private": true,
-  "version": "0.7.7",
+  "version": "0.7.8",
   "description": "Desktop coding agent workbench for Claude Code Haha.",
   "homepage": "https://github.com/NanmiCoder/cc-haha",
   "author": {
-    "name": "NanmiCoder",
-    "email": "relakkes@gmail.com"
+    "name": "doitx.ai"
   },
   "type": "module",
   "main": "electron-dist/main.cjs",

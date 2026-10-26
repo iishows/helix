@@ -13,31 +13,31 @@
   },
 
   "author": {
-    "name": "iishows",
+    "name": "doitx.ai",
     "github": "https://github.com/iishows",
     "social": [
       {
         "name": "GitHub",
         "url": "https://github.com/iishows",
-        "label": "iishows",
+        "label": "doitx.ai",
         "icon": "icons/github.svg"
       },
       {
         "name": "Bilibili",
         "url": "https://space.bilibili.com/3461579641194985",
-        "label": "iishows",
+        "label": "doitx.ai",
         "icon": "icons/bilibili.svg"
       },
       {
         "name": "Douyin",
         "url": "https://www.douyin.com/user/MS4wLjABAAAAg-ERYsj2ql8FRzp1YnpFM1oDKOVLI8CEFqKFC7jseIQ",
-        "label": "iishows",
+        "label": "doitx.ai",
         "icon": "icons/douyin.svg"
       },
       {
         "name": "Xiaohongshu",
         "url": "https://www.xiaohongshu.com/user/profile/62da33260000000002002ff3",
-        "label": "iishows",
+        "label": "doitx.ai",
         "icon": "icons/xiaohongshu.svg"
       }
     ]
