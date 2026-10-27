@@ -29,8 +29,15 @@ vi.mock('electron', () => ({
   shell: { writeShortcutLink: vi.fn(() => true) },
 }))
 
-const { createProfile, deleteProfile, listProfiles, profilesRoot, renameProfile, sanitizeProfileDirName } =
-  await import('./profiles')
+const {
+  createProfile,
+  deleteProfile,
+  listProfiles,
+  profileLaunchEnv,
+  profilesRoot,
+  renameProfile,
+  sanitizeProfileDirName,
+} = await import('./profiles')
 
 /** 1x1 的合法 PNG，用来验证 ICO 打包。 */
 const ONE_PX_PNG = Buffer.from(
@@ -71,6 +78,30 @@ describe('sanitizeProfileDirName', () => {
   it('falls back when the name reduces to nothing', () => {
     expect(sanitizeProfileDirName('   ')).toBe('profile')
     expect(sanitizeProfileDirName('///')).toBe('profile')
+  })
+})
+
+describe('profileLaunchEnv / launchProfile', () => {
+  it('drops the app-managed vars so the child derives its own data dir', () => {
+    // 回归：应用内启动 profile 时，父进程的 applyStartupPortableMode 已把这三个变量
+    // 写进 process.env；若原样传给子进程，子进程会跳过 --instance 派生的数据目录、
+    // 回落到共享默认目录，导致所有 profile 共用会话数据。
+    const env = profileLaunchEnv({
+      PATH: '/usr/bin',
+      CLAUDE_CONFIG_DIR: '/parent/data',
+      CC_HAHA_APP_PORTABLE_DIR: '1',
+      WEBVIEW2_USER_DATA_FOLDER: '/parent/EBWebView',
+    })
+    expect(env.CLAUDE_CONFIG_DIR).toBeUndefined()
+    expect(env.CC_HAHA_APP_PORTABLE_DIR).toBeUndefined()
+    expect(env.WEBVIEW2_USER_DATA_FOLDER).toBeUndefined()
+    expect(env.PATH).toBe('/usr/bin')
+  })
+
+  it('keeps an externally injected CLAUDE_CONFIG_DIR (environment takeover mode)', () => {
+    // 外部显式接管时不该被剔除，行为要与快捷方式启动继承系统环境一致。
+    const env = profileLaunchEnv({ CLAUDE_CONFIG_DIR: '/external/data' })
+    expect(env.CLAUDE_CONFIG_DIR).toBe('/external/data')
   })
 })
 

@@ -1,7 +1,7 @@
 {
   "name": "claude-code-desktop",
   "private": true,
-  "version": "0.7.9",
+  "version": "0.7.10",
   "description": "Helix —— 基于 cc-haha 的桌面端 Claude Code 工作台（非官方修改版）",
   "homepage": "https://github.com/iishows/helix",
   "author": {

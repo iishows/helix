@@ -259,6 +259,30 @@ export function createProfile(
 }
 
 /**
+ * 派生「干净」的子进程环境：剔除当前进程被应用托管时写入的三个变量。
+ *
+ * 当前进程启动后会执行 applyStartupPortableMode()，把 CLAUDE_CONFIG_DIR /
+ * CC_HAHA_APP_PORTABLE_DIR / WEBVIEW2_USER_DATA_FOLDER 写进 process.env（见 appMode.ts）。
+ * 若不剔除而直接 spawn，子进程会继承这三个变量：applyInstanceBootstrap() 会因为
+ * CLAUDE_CONFIG_DIR 已存在而跳过 --instance 派生的数据目录，随后 clearAppManagedPortableEnv()
+ * 又因 CC_HAHA_APP_PORTABLE_DIR=1 把 CLAUDE_CONFIG_DIR 删除，最终回落到共享的品牌默认目录,
+ * 于是所有 profile 共用同一份会话数据（左侧列表不隔离）。快捷方式启动继承的是系统环境,
+ * 没有这三个变量，所以反而是隔离的。
+ */
+export function profileLaunchEnv(env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+  const next = { ...env }
+  // 判据与 appMode.clearAppManagedPortableEnv 一致：只有本进程确实由应用托管时
+  // 才剔除。外部显式注入 CLAUDE_CONFIG_DIR（环境变量接管模式）时保持原样，
+  // 与快捷方式启动继承系统环境的行为对齐。
+  if (next.CC_HAHA_APP_PORTABLE_DIR === '1') {
+    delete next.CLAUDE_CONFIG_DIR
+    delete next.CC_HAHA_APP_PORTABLE_DIR
+    delete next.WEBVIEW2_USER_DATA_FOLDER
+  }
+  return next
+}
+
+/**
  * 启动另一个 profile：新开一个进程，当前窗口不受影响。
  *
  * 走独立进程而不是复用现有窗口，是因为数据目录与 Electron 缓存都在启动最早期由
@@ -277,6 +301,7 @@ export function launchProfile(dir: string): void {
     detached: true,
     stdio: 'ignore',
     cwd: path.dirname(exe),
+    env: profileLaunchEnv(),
   })
   child.unref()
 }
